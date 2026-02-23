@@ -166,19 +166,6 @@ export default function KanbanProspectos() {
                     </div>
 
                 ))}
-                <div className="flex items-center gap-2">
-                    {item.isOnline ? (
-                        <span className="flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-emerald-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                        </span>
-                    ) : (
-                        <span className="h-2 w-2 rounded-full bg-slate-200"></span>
-                    )}
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">
-                        {item.isOnline ? 'Navegando ahora' : 'Desconectado'}
-                    </p>
-                </div>
             </div>
         </div>
     );

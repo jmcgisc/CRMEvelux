@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { Link, useLocation } from 'react-router-dom';
 import {
     Home, Calendar, CalendarDays, Users, FileText, Settings,
@@ -20,8 +21,8 @@ const SidebarItem = ({ icon: Icon, label, to, subItems = [] }) => {
                 to={hasChildren ? '#' : to}
                 onClick={e => { if (hasChildren) { e.preventDefault(); setOpen(p => !p); } }}
                 className={`flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-150 group ${isActive
-                        ? 'bg-blue-600 text-white shadow-md shadow-blue-100'
-                        : 'text-slate-600 hover:bg-blue-50 hover:text-blue-600'
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-100'
+                    : 'text-slate-600 hover:bg-blue-50 hover:text-blue-600'
                     }`}
             >
                 <div className="flex items-center gap-3">
@@ -47,8 +48,8 @@ const SidebarItem = ({ icon: Icon, label, to, subItems = [] }) => {
                                     key={i}
                                     to={item.to}
                                     className={`block px-2 py-1.5 rounded-lg text-[11px] font-medium transition-all ${active
-                                            ? 'bg-blue-50 text-blue-700 font-bold'
-                                            : 'text-slate-500 hover:text-blue-600 hover:bg-blue-50/50'
+                                        ? 'bg-blue-50 text-blue-700 font-bold'
+                                        : 'text-slate-500 hover:text-blue-600 hover:bg-blue-50/50'
                                         }`}
                                 >
                                     {item.label}
@@ -70,6 +71,52 @@ const SectionLabel = ({ label }) => (
 );
 
 // ── Sidebar principal ─────────────────────────────────────────────
+// ── Footer con datos del usuario autenticado ─────────────────────
+function FooterUsuario() {
+    const { user, logout } = useAuth();
+    const iniciales = user?.nombre
+        ? user.nombre.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
+        : '?';
+
+    const handleLogout = async () => {
+        if (window.confirm('¿Cerrar sesión?')) {
+            await logout();
+        }
+    };
+
+    return (
+        <div className="pt-4 border-t border-slate-100 mt-4">
+            <div className="bg-slate-50 p-3 rounded-2xl flex items-center gap-3">
+                {/* Avatar */}
+                {user?.foto ? (
+                    <img src={user.foto} alt={user.nombre} className="w-8 h-8 rounded-xl object-cover flex-shrink-0" />
+                ) : (
+                    <div className="w-8 h-8 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 font-black text-xs flex-shrink-0">
+                        {iniciales}
+                    </div>
+                )}
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-black text-slate-700 truncate uppercase">
+                        {user?.nombre || 'Usuario'}
+                    </p>
+                    <p className="text-[8px] font-bold text-slate-400 uppercase italic">
+                        {user?.rol || 'Acceso CRM'}
+                    </p>
+                </div>
+                {/* Botón Logout */}
+                <button
+                    onClick={handleLogout}
+                    title="Cerrar sesión"
+                    className="text-slate-300 hover:text-red-500 transition-colors flex-shrink-0 p-1 rounded-lg hover:bg-red-50"
+                >
+                    <LogOut size={15} />
+                </button>
+            </div>
+        </div>
+    );
+}
+
 export default function Sidebar() {
     return (
         <aside className="w-64 bg-white h-screen border-r border-slate-100 p-4 sticky top-0 overflow-y-auto flex flex-col shadow-sm">
@@ -154,20 +201,7 @@ export default function Sidebar() {
             </nav>
 
             {/* Footer de usuario */}
-            <div className="pt-4 border-t border-slate-100 mt-4">
-                <div className="bg-slate-50 p-3 rounded-2xl flex items-center gap-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 font-black text-xs flex-shrink-0">
-                        JM
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <p className="text-[10px] font-black text-slate-700 truncate uppercase">José Manuel C.</p>
-                        <p className="text-[8px] font-bold text-slate-400 uppercase italic">CEO Stratik</p>
-                    </div>
-                    <button className="text-slate-300 hover:text-red-500 transition-colors flex-shrink-0">
-                        <LogOut size={15} />
-                    </button>
-                </div>
-            </div>
+            <FooterUsuario />
         </aside>
     );
 }

@@ -29,7 +29,10 @@ export default function AbonosReserva({ reserva, onClose }) {
         } catch (err) { console.error(err); }
     };
 
-    const saldoPendiente = Number(reserva.montoTotal) - (Number(reserva.pagado) || 0);
+    // Guard: si la reserva aún no llegó, no renderizar
+    if (!reserva) return null;
+
+    const saldoPendiente = Number(reserva.montoTotal || 0) - (Number(reserva.pagado) || 0);
 
     return (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[150] p-4">
