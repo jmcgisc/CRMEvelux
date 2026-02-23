@@ -32,6 +32,7 @@ import GeneradorVoucher from './pages/operacion/GeneradorVoucher';
 import ListaVouchers from './pages/operacion/ListaVouchers';
 import CajaChica from './pages/finanzas/CajaChica';
 import { SpeedInsights } from '@vercel/speed-insights/react';
+import { Analytics } from '@vercel/analytics/react';
 
 // Componente interno que tiene acceso al contexto
 function AppContent() {
@@ -143,6 +144,7 @@ function App() {
       <AuthProvider>
         <AppContent />
         <SpeedInsights />
+        <Analytics />
       </AuthProvider>
     </Router>
   );
