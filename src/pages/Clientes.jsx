@@ -1,17 +1,24 @@
 import { useEffect, useState } from 'react';
 import { db } from '../firebaseConfig';
-import { collection, onSnapshot, addDoc, query, orderBy } from 'firebase/firestore';
-import { UserPlus, Search, Globe, Monitor, Users } from 'lucide-react';
+import { collection, onSnapshot, addDoc, query, orderBy, doc, updateDoc } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
+import { UserPlus, Search, Globe, Monitor, Users, Star, ExternalLink, Pencil, Check, X } from 'lucide-react';
 
 export default function Clientes() {
+    const navigate = useNavigate();
     const [clientesCRM, setClientesCRM] = useState([]);
     const [clientesWeb, setClientesWeb] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [busqueda, setBusqueda] = useState('');
-    const [filtroOrigen, setFiltroOrigen] = useState('todos'); // 'todos' | 'web' | 'crm'
+    const [filtroOrigen, setFiltroOrigen] = useState('todos');
     const [nuevoCliente, setNuevoCliente] = useState({
         nombre: '', correo: '', celular: '', ciudad: '', perfil: 'Frecuente'
     });
+
+    // Modal edición de puntos
+    const [editPuntos, setEditPuntos] = useState(null); // { id, origen, nombre, puntosActuales }
+    const [nuevoPuntaje, setNuevoPuntaje] = useState(0);
+    const [motivoEdicion, setMotivoEdicion] = useState('');
 
     // ── 1. Escuchar colección "clientes" (altas manuales desde el CRM) ──────────
     useEffect(() => {
@@ -39,6 +46,8 @@ export default function Clientes() {
                 ciudad: doc.data().ciudad || doc.data().city || '',
                 foto: doc.data().foto || doc.data().photoURL || null,
                 fechaAlta: doc.data().fechaAlta || doc.data().createdAt || null,
+                // Puntos del programa de lealtad
+                puntos: doc.data().puntos ?? doc.data().points ?? null,
                 ...doc.data()
             })));
         });
@@ -74,6 +83,23 @@ export default function Clientes() {
         if (fecha?.toDate) return fecha.toDate().toLocaleDateString('es-MX');
         if (typeof fecha === 'string') return fecha;
         return '—';
+    };
+
+    // ── Abrir modal de edición de puntos ──────────────────────────────
+    const abrirEditPuntos = (c) => {
+        setEditPuntos({ id: c.id, origen: c._origen, nombre: c.nombre, puntosActuales: c.puntos ?? 0 });
+        setNuevoPuntaje(c.puntos ?? 0);
+        setMotivoEdicion('');
+    };
+
+    // ── Guardar puntos editados en Firestore ──────────────────────────
+    const guardarPuntos = async () => {
+        if (!editPuntos) return;
+        const coleccion = editPuntos.origen === 'web' ? 'users' : 'clientes';
+        try {
+            await updateDoc(doc(db, coleccion, editPuntos.id), { puntos: Number(nuevoPuntaje) });
+            setEditPuntos(null);
+        } catch (err) { console.error(err); alert('Error al actualizar puntos.'); }
     };
 
     return (
@@ -122,8 +148,8 @@ export default function Clientes() {
                             key={key}
                             onClick={() => setFiltroOrigen(key)}
                             className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wide transition-all border-2 ${filtroOrigen === key
-                                    ? 'bg-blue-600 text-white border-blue-600 shadow-md'
-                                    : 'bg-white text-slate-500 border-slate-100 hover:border-blue-200'
+                                ? 'bg-blue-600 text-white border-blue-600 shadow-md'
+                                : 'bg-white text-slate-500 border-slate-100 hover:border-blue-200'
                                 }`}
                         >
                             {icon} {label}
@@ -140,6 +166,7 @@ export default function Clientes() {
                             <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Cliente</th>
                             <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Contacto</th>
                             <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Ciudad</th>
+                            <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Puntos</th>
                             <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Origen</th>
                             <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Alta</th>
                         </tr>
@@ -147,7 +174,7 @@ export default function Clientes() {
                     <tbody className="divide-y divide-slate-50">
                         {todosLosClientes.length === 0 ? (
                             <tr>
-                                <td colSpan={5} className="p-12 text-center text-slate-300 text-sm font-semibold">
+                                <td colSpan={6} className="p-12 text-center text-slate-300 text-sm font-semibold">
                                     No se encontraron clientes con ese criterio.
                                 </td>
                             </tr>
@@ -156,13 +183,8 @@ export default function Clientes() {
                                 <tr key={`${c._origen}-${c.id}`} className="hover:bg-blue-50/30 transition-colors group">
                                     <td className="p-4">
                                         <div className="flex items-center gap-3">
-                                            {/* Avatar */}
                                             {c.foto ? (
-                                                <img
-                                                    src={c.foto}
-                                                    alt={c.nombre}
-                                                    className="w-9 h-9 rounded-full object-cover border-2 border-white shadow"
-                                                />
+                                                <img src={c.foto} alt={c.nombre} className="w-9 h-9 rounded-full object-cover border-2 border-white shadow" />
                                             ) : (
                                                 <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-black text-sm">
                                                     {(c.nombre || '?')[0].toUpperCase()}
@@ -180,11 +202,33 @@ export default function Clientes() {
                                     </td>
                                     <td className="p-4">
                                         <p className="text-sm text-slate-700 font-medium">{c.correo}</p>
-                                        {c.celular && (
-                                            <p className="text-xs text-slate-400">{c.celular}</p>
-                                        )}
+                                        {c.celular && <p className="text-xs text-slate-400">{c.celular}</p>}
                                     </td>
                                     <td className="p-4 text-sm text-slate-600">{c.ciudad || '—'}</td>
+
+                                    {/* ── Columna Puntos (con botón editar) ── */}
+                                    <td className="p-4 text-center">
+                                        <div className="flex items-center justify-center gap-2 group/pts">
+                                            {/* Badge de puntos */}
+                                            {c.puntos != null && Number(c.puntos) > 0 ? (
+                                                <div className="inline-flex items-center gap-1.5 bg-amber-50 border border-amber-200 text-amber-700 font-black text-sm px-3 py-1 rounded-full">
+                                                    <Star size={12} className="fill-amber-400 text-amber-400" />
+                                                    {Number(c.puntos).toLocaleString()}
+                                                </div>
+                                            ) : (
+                                                <span className="text-slate-300 text-xs font-bold">0</span>
+                                            )}
+                                            {/* Botón editar (siempre visible para ambos orígenes) */}
+                                            <button
+                                                onClick={() => abrirEditPuntos(c)}
+                                                title="Editar puntos"
+                                                className="opacity-0 group-hover/pts:opacity-100 transition-opacity p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-500 hover:text-amber-700"
+                                            >
+                                                <Pencil size={12} />
+                                            </button>
+                                        </div>
+                                    </td>
+
                                     <td className="p-4 text-center">
                                         {c._origen === 'web' ? (
                                             <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-black uppercase px-2.5 py-1 rounded-full">
@@ -199,6 +243,18 @@ export default function Clientes() {
                                     <td className="p-4 text-center text-xs text-slate-400 font-medium">
                                         {formatFecha(c.fechaAlta)}
                                     </td>
+                                    {/* Botón ver detalle solo para usuarios Web */}
+                                    {c._origen === 'web' && (
+                                        <td className="p-4 text-center">
+                                            <button
+                                                onClick={() => navigate(`/directorios/clientes/${c.id}`)}
+                                                className="flex items-center gap-1 text-blue-600 hover:text-blue-800 font-black text-xs uppercase tracking-wide transition-colors mx-auto"
+                                            >
+                                                <ExternalLink size={13} /> Ver perfil
+                                            </button>
+                                        </td>
+                                    )}
+                                    {c._origen !== 'web' && <td className="p-4" />}
                                 </tr>
                             ))
                         )}
@@ -244,6 +300,90 @@ export default function Clientes() {
                                 Guardar Cliente
                             </button>
                         </form>
+                    </div>
+                </div>
+            )}
+            {/* ── MODAL Editar Puntos ─────────────────────────────────────── */}
+            {editPuntos && (
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[200] p-4">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
+                        {/* Header */}
+                        <div className="bg-amber-500 p-5 text-white flex justify-between items-center">
+                            <div className="flex items-center gap-2">
+                                <Star size={18} className="fill-white" />
+                                <div>
+                                    <h3 className="font-black uppercase text-sm tracking-tight">Editar Puntos</h3>
+                                    <p className="text-amber-100 text-[10px] truncate max-w-[200px]">{editPuntos.nombre}</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setEditPuntos(null)} className="hover:rotate-90 transition-transform text-xl">✕</button>
+                        </div>
+
+                        <div className="p-6 space-y-5">
+                            {/* Puntaje actual vs nuevo */}
+                            <div className="bg-amber-50 rounded-2xl p-4 flex items-center justify-between border border-amber-100">
+                                <div className="text-center">
+                                    <p className="text-[9px] font-black text-amber-500 uppercase">Actual</p>
+                                    <p className="text-2xl font-black text-amber-700">{Number(editPuntos.puntosActuales ?? nuevoPuntaje).toLocaleString()}</p>
+                                </div>
+                                <div className="text-amber-300 font-black text-xl">→</div>
+                                <div className="text-center">
+                                    <p className="text-[9px] font-black text-amber-500 uppercase">Nuevo</p>
+                                    <p className="text-2xl font-black text-amber-700">{Number(nuevoPuntaje).toLocaleString()}</p>
+                                </div>
+                            </div>
+
+                            {/* Input de puntos */}
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Puntos a asignar</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    value={nuevoPuntaje}
+                                    className="w-full border-2 border-amber-200 rounded-2xl p-3 text-2xl font-black text-amber-700 text-center outline-none focus:border-amber-400 transition-all"
+                                    onChange={e => setNuevoPuntaje(Math.max(0, Number(e.target.value)))}
+                                />
+                                {/* Atajos rápidos */}
+                                <div className="flex gap-2 mt-2 flex-wrap">
+                                    {[100, 250, 500, 1000].map(n => (
+                                        <button key={n} type="button"
+                                            onClick={() => setNuevoPuntaje(p => Number(p) + n)}
+                                            className="flex-1 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 font-black text-[10px] rounded-xl uppercase transition-all border border-amber-100">
+                                            +{n}
+                                        </button>
+                                    ))}
+                                    <button type="button"
+                                        onClick={() => setNuevoPuntaje(0)}
+                                        className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-500 font-black text-[10px] rounded-xl uppercase transition-all border border-red-100">
+                                        Reset
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Motivo */}
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Motivo (opcional)</label>
+                                <input
+                                    type="text"
+                                    placeholder="Ej. Bono por referido, corrección manual..."
+                                    value={motivoEdicion}
+                                    onChange={e => setMotivoEdicion(e.target.value)}
+                                    className="w-full border-2 border-slate-100 rounded-xl p-2.5 text-sm outline-none focus:border-amber-400"
+                                />
+                            </div>
+
+                            {/* Acciones */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <button onClick={() => setEditPuntos(null)}
+                                    className="flex items-center justify-center gap-1.5 py-3 rounded-2xl border-2 border-slate-100 text-slate-500 font-black text-xs uppercase hover:bg-slate-50 transition-all">
+                                    <X size={14} /> Cancelar
+                                </button>
+                                <button onClick={guardarPuntos}
+                                    className="flex items-center justify-center gap-1.5 py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs uppercase shadow-lg shadow-amber-100 transition-all">
+                                    <Check size={14} /> Guardar
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

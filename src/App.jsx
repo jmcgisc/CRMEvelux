@@ -1,11 +1,12 @@
-// src/App.jsx
+import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import Sidebar from './components/Sidebar';
+import Sidebar, { MobileTopBar } from './components/Sidebar';
 import Login from './pages/Login';
 import { ShieldX } from 'lucide-react';
 import Dashboard from './pages/Dashboard';
 import Clientes from './pages/Clientes';
+import ClienteDetalle from './pages/clientes/ClienteDetalle';
 import Empresas from './pages/Empresas';
 import Reservaciones from './pages/Reservaciones';
 import Bloqueos from './pages/Bloqueos';
@@ -23,6 +24,8 @@ import AbonosReserva from './pages/reservaciones/AbonosReserva';
 import PasajerosTransito from './pages/reportes/PasajerosTransito';
 import ReporteServicio from './pages/reportes/ReporteServicio';
 import ReporteDifusion from './pages/reportes/ReporteDifusion';
+import ReporteHoteles from './pages/reportes/ReporteHoteles';
+import PagosClientes from './pages/reportes/PagosClientes';
 import CalendarioReservas from './pages/operacion/CalendarioReservas';
 import KanbanProspectos from './pages/clientes/KanbanProspectos';
 import Cotizador from './pages/reservaciones/Cotizador';
@@ -37,6 +40,7 @@ import { Analytics } from '@vercel/analytics/react';
 // Componente interno que tiene acceso al contexto
 function AppContent() {
   const { user, loading, accesoDenegado, limpiarError } = useAuth();
+  const [sidebarOpen, setSidebarOpen] = useState(false); // ← debe estar antes de cualquier return
 
   if (loading) {
     return (
@@ -83,57 +87,67 @@ function AppContent() {
   // Con sesión → mostrar CRM completo
   return (
     <div className="flex min-h-screen bg-gray-100">
-      <Sidebar />
-      <main className="flex-1 p-8 min-w-0 overflow-x-hidden">
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
+      {/* Sidebar (desktop fijo / móvil drawer) */}
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-          {/* Rutas de Directorios */}
-          <Route path="/directorios/clientes" element={<Clientes />} />
-          <Route path="/directorios/empresas" element={<Empresas />} />
-          <Route path="/directorios/proveedores" element={<Proveedores />} />
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Barra superior solo en móvil */}
+        <MobileTopBar onMenuClick={() => setSidebarOpen(true)} />
 
-          {/* Rutas de Reservaciones */}
-          <Route path="/reservaciones" element={<Reservaciones />} />
+        <main className="flex-1 p-4 md:p-8 overflow-x-hidden">
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
 
-          {/* Rutas de Configuración */}
-          <Route path="/configuracion/usuarios" element={<Usuarios />} />
-          <Route path="/configuracion/destinos" element={<Destinos />} />
-          <Route path="/configuracion/hoteles" element={<Hoteles />} />
-          <Route path="/configuracion/paquetes" element={<Paquetes />} />
-          <Route path="/configuracion/autobuses" element={<Autobuses />} />
-          <Route path="/configuracion/aerolineas" element={<Aerolineas />} />
-          <Route path="/configuracion/bitacora" element={<Bitacora />} />
+            {/* Rutas de Directorios */}
+            <Route path="/directorios/clientes" element={<Clientes />} />
+            <Route path="/directorios/clientes/:id" element={<ClienteDetalle />} />
+            <Route path="/directorios/empresas" element={<Empresas />} />
+            <Route path="/directorios/proveedores" element={<Proveedores />} />
 
-          {/* Rutas de Inventario y Reportes */}
-          <Route path="/bloqueos" element={<Bloqueos />} />
-          <Route path="/reportes/ventas" element={<Reportes />} />
+            {/* Rutas de Reservaciones */}
+            <Route path="/reservaciones" element={<Reservaciones />} />
 
-          {/* Rutas de Reservaciones adicionales */}
-          <Route path="/reservaciones/abonos" element={<AbonosReserva />} />
-          <Route path="/reservaciones/limite-cliente" element={<LimiteCliente />} />
-          <Route path="/reservaciones/nueva" element={<Cotizador />} />
+            {/* Rutas de Configuración */}
+            <Route path="/configuracion/usuarios" element={<Usuarios />} />
+            <Route path="/configuracion/destinos" element={<Destinos />} />
+            <Route path="/configuracion/hoteles" element={<Hoteles />} />
+            <Route path="/configuracion/paquetes" element={<Paquetes />} />
+            <Route path="/configuracion/autobuses" element={<Autobuses />} />
+            <Route path="/configuracion/aerolineas" element={<Aerolineas />} />
+            <Route path="/configuracion/bitacora" element={<Bitacora />} />
 
-          {/* Rutas de Reportes adicionales */}
-          <Route path="/reportes/ventas-agencia" element={<VentasAgencia />} />
-          <Route path="/reportes/pagos-proveedores" element={<PagosProveedores />} />
-          <Route path="/reportes/pasajeros-transito" element={<PasajerosTransito />} />
-          <Route path="/reportes/servicio" element={<ReporteServicio />} />
-          <Route path="/reportes/difusion" element={<ReporteDifusion />} />
+            {/* Rutas de Inventario y Reportes */}
+            <Route path="/bloqueos" element={<Bloqueos />} />
+            <Route path="/reportes/ventas" element={<Reportes />} />
 
-          {/* Rutas de Operación */}
-          <Route path="/operacion/calendario" element={<CalendarioReservas />} />
-          <Route path="/operacion/vouchers" element={<ListaVouchers />} />
-          <Route path="/operacion/voucher/:id" element={<GeneradorVoucher />} />
+            {/* Rutas de Reservaciones adicionales */}
+            <Route path="/reservaciones/abonos" element={<AbonosReserva />} />
+            <Route path="/reservaciones/limite-cliente" element={<LimiteCliente />} />
+            <Route path="/reservaciones/nueva" element={<Cotizador />} />
 
-          {/* Rutas de Clientes */}
-          <Route path="/clientes/kanban" element={<KanbanProspectos />} />
+            {/* Rutas de Reportes adicionales */}
+            <Route path="/reportes/ventas-agencia" element={<VentasAgencia />} />
+            <Route path="/reportes/pagos-proveedores" element={<PagosProveedores />} />
+            <Route path="/reportes/pasajeros-transito" element={<PasajerosTransito />} />
+            <Route path="/reportes/servicio" element={<ReporteServicio />} />
+            <Route path="/reportes/difusion" element={<ReporteDifusion />} />
+            <Route path="/reportes/hoteles" element={<ReporteHoteles />} />
+            <Route path="/reportes/pagos-clientes" element={<PagosClientes />} />
 
-          {/* Rutas de Finanzas */}
-          <Route path="/finanzas/caja-chica" element={<CajaChica />} />
+            {/* Rutas de Operación */}
+            <Route path="/operacion/calendario" element={<CalendarioReservas />} />
+            <Route path="/operacion/vouchers" element={<ListaVouchers />} />
+            <Route path="/operacion/voucher/:id" element={<GeneradorVoucher />} />
 
-        </Routes>
-      </main>
+            {/* Rutas de Clientes */}
+            <Route path="/clientes/kanban" element={<KanbanProspectos />} />
+
+            {/* Rutas de Finanzas */}
+            <Route path="/finanzas/caja-chica" element={<CajaChica />} />
+
+          </Routes>
+        </main>
+      </div>
     </div>
   );
 }
