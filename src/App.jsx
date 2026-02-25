@@ -18,6 +18,7 @@ import Aerolineas from './pages/configuracion/Aerolineas';
 import Bitacora from './pages/configuracion/Bitacora';
 import LimiteCliente from './pages/configuracion/reservaciones/LimiteCliente';
 import Proveedores from './pages/directorios/Proveedores';
+import DirectorioPaquetes from './pages/directorios/DirectorioPaquetes';
 import VentasAgencia from './pages/reportes/VentasAgencia';
 import PagosProveedores from './pages/reportes/PagosProveedores';
 import AbonosReserva from './pages/reservaciones/AbonosReserva';
@@ -103,18 +104,23 @@ function AppContent() {
             <Route path="/directorios/clientes/:id" element={<ClienteDetalle />} />
             <Route path="/directorios/empresas" element={<Empresas />} />
             <Route path="/directorios/proveedores" element={<Proveedores />} />
+            <Route path="/directorios/paquetes" element={<DirectorioPaquetes />} />
 
             {/* Rutas de Reservaciones */}
             <Route path="/reservaciones" element={<Reservaciones />} />
 
-            {/* Rutas de Configuración */}
-            <Route path="/configuracion/usuarios" element={<Usuarios />} />
-            <Route path="/configuracion/destinos" element={<Destinos />} />
-            <Route path="/configuracion/hoteles" element={<Hoteles />} />
-            <Route path="/configuracion/paquetes" element={<Paquetes />} />
-            <Route path="/configuracion/autobuses" element={<Autobuses />} />
-            <Route path="/configuracion/aerolineas" element={<Aerolineas />} />
-            <Route path="/configuracion/bitacora" element={<Bitacora />} />
+            {/* Rutas de Configuración y Finanzas (Acceso restringido) */}
+            {user?.rol !== 'Ventas' && (
+              <>
+                <Route path="/configuracion/usuarios" element={<Usuarios />} />
+                <Route path="/configuracion/destinos" element={<Destinos />} />
+                <Route path="/configuracion/hoteles" element={<Hoteles />} />
+                <Route path="/configuracion/paquetes" element={<Paquetes />} />
+                <Route path="/configuracion/autobuses" element={<Autobuses />} />
+                <Route path="/configuracion/aerolineas" element={<Aerolineas />} />
+                <Route path="/configuracion/bitacora" element={<Bitacora />} />
+              </>
+            )}
 
             {/* Rutas de Inventario y Reportes */}
             <Route path="/bloqueos" element={<Bloqueos />} />
@@ -143,7 +149,9 @@ function AppContent() {
             <Route path="/clientes/kanban" element={<KanbanProspectos />} />
 
             {/* Rutas de Finanzas */}
-            <Route path="/finanzas/caja-chica" element={<CajaChica />} />
+            {user?.rol !== 'Ventas' && (
+              <Route path="/finanzas/caja-chica" element={<CajaChica />} />
+            )}
 
           </Routes>
         </main>

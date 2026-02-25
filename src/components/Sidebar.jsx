@@ -112,6 +112,7 @@ function FooterUsuario() {
 
 // ── Contenido interno del sidebar (compartido entre desktop y móvil) ──
 function SidebarContent({ onNavClick }) {
+    const { user } = useAuth();
     return (
         <>
             {/* Logo */}
@@ -139,6 +140,7 @@ function SidebarContent({ onNavClick }) {
                         { label: "Clientes", to: "/directorios/clientes" },
                         { label: "Empresas", to: "/directorios/empresas" },
                         { label: "Proveedores", to: "/directorios/proveedores" },
+                        { label: "Paquetes", to: "/directorios/paquetes" },
                     ]}
                 />
                 <SidebarItem icon={Users} label="Pipeline (Kanban)" to="/clientes/kanban" onNavClick={onNavClick} />
@@ -156,26 +158,34 @@ function SidebarContent({ onNavClick }) {
                     ]}
                 />
 
-                <SectionLabel label="Finanzas" />
-                <SidebarItem icon={Wallet} label="Caja Chica" to="/finanzas/caja-chica" onNavClick={onNavClick} />
+                {user?.rol !== 'Ventas' && (
+                    <>
+                        <SectionLabel label="Finanzas" />
+                        <SidebarItem icon={Wallet} label="Caja Chica" to="/finanzas/caja-chica" onNavClick={onNavClick} />
+                    </>
+                )}
 
                 <SectionLabel label="Operación" />
                 <SidebarItem icon={CalendarDays} label="Calendario" to="/operacion/calendario" onNavClick={onNavClick} />
                 <SidebarItem icon={Ticket} label="Vouchers" to="/operacion/vouchers" onNavClick={onNavClick} />
                 <SidebarItem icon={Lock} label="Bloqueos" to="/bloqueos" onNavClick={onNavClick} />
 
-                <SectionLabel label="Configuración" />
-                <SidebarItem icon={Settings} label="Configuración" to="/configuracion" onNavClick={onNavClick}
-                    subItems={[
-                        { label: "Usuarios", to: "/configuracion/usuarios" },
-                        { label: "Destinos", to: "/configuracion/destinos" },
-                        { label: "Hoteles", to: "/configuracion/hoteles" },
-                        { label: "Autobuses", to: "/configuracion/autobuses" },
-                        { label: "Aerolineas", to: "/configuracion/aerolineas" },
-                        { label: "Paquetes", to: "/configuracion/paquetes" },
-                        { label: "Bitácora", to: "/configuracion/bitacora" },
-                    ]}
-                />
+                {user?.rol !== 'Ventas' && (
+                    <>
+                        <SectionLabel label="Configuración" />
+                        <SidebarItem icon={Settings} label="Configuración" to="/configuracion" onNavClick={onNavClick}
+                            subItems={[
+                                { label: "Usuarios", to: "/configuracion/usuarios" },
+                                { label: "Destinos", to: "/configuracion/destinos" },
+                                { label: "Hoteles", to: "/configuracion/hoteles" },
+                                { label: "Autobuses", to: "/configuracion/autobuses" },
+                                { label: "Aerolineas", to: "/configuracion/aerolineas" },
+                                { label: "Paquetes", to: "/configuracion/paquetes" },
+                                { label: "Bitácora", to: "/configuracion/bitacora" },
+                            ]}
+                        />
+                    </>
+                )}
             </nav>
 
             <FooterUsuario />

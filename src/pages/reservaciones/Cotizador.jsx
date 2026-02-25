@@ -7,6 +7,7 @@ import {
     Gift, Hotel, Plane, Bus, Utensils, MapPin, Users, Calendar,
     DollarSign, FileText, ChevronDown, ChevronUp, Plus, Trash2, Star
 } from 'lucide-react';
+import { VALOR_PUNTO, calcularPuntosGanados, calcularDescuentoPuntos, PORCENTAJE_ACUMULACION } from '../../utils/rewards';
 
 const MONEDAS = ['MXN', 'USD'];
 const TIPOS_SERVICIO = ['Paquete Completo', 'Solo Hotel', 'Solo Vuelos', 'Solo Traslados', 'Tour / Excursión', 'Crucero', 'Personalizado'];
@@ -14,8 +15,6 @@ const TIPOS_HABITACION = ['Estándar', 'Deluxe', 'Suite Junior', 'Suite Master',
 const PLANES_ALIMENTACION = ['Todo Incluido (AI)', 'Solo Alojamiento (EP)', 'Desayuno Incluido (BP)', 'Media Pensión (MAP)', 'Pensión Completa (AP)'];
 const TIPOS_VUELO = ['Solo Ida', 'Ida y Vuelta', 'Con Escalas', 'Vuelo Chárter'];
 const TIPOS_TRASLADO = ['Compartido', 'Privado', 'Lujo', 'Shuttle'];
-
-const VALOR_PUNTO = 0.10;
 
 // ── Sección colapsable ─────────────────────────────────────────────────
 function Seccion({ titulo, icon: Icon, color = 'blue', children, defaultOpen = false }) {
@@ -123,12 +122,14 @@ export default function Cotizador() {
     // Cálculos
     const clienteSel = clientes.find(c => c.id === cot.clienteId);
     const puntosDispon = clienteSel?.puntos || 0;
-    const descuentoPuntos = usarPuntos ? (puntosACanjear * VALOR_PUNTO) : 0;
+    const descuentoPuntos = usarPuntos ? calcularDescuentoPuntos(puntosACanjear) : 0;
     const totalServExtra = serviciosExtra.reduce((a, s) => a + Number(s.precio || 0), 0);
     const subtotal = Number(cot.precioPublico) + totalServExtra;
     const totalFinal = Math.max(0, subtotal - Number(cot.descuentoEspecial) - descuentoPuntos);
     const utilidad = totalFinal - Number(cot.costoNeto);
-    const puntosAGanar = Math.floor(totalFinal / 100);
+    // 0.5% de la venta en MXN → convertido a puntos (10 pts = $1)
+    const valorPuntosGanados = totalFinal * PORCENTAJE_ACUMULACION;   // MXN
+    const puntosAGanar = calcularPuntosGanados(totalFinal);
     const folio = cot.referenciaInterna || `COT-${Date.now().toString().slice(-6)}`;
 
     const handlePaquete = (id) => {
@@ -471,8 +472,8 @@ export default function Cotizador() {
 
                     {/* ── 8. Canje de puntos ── */}
                     <div className={`rounded-2xl border p-5 transition-all ${puntosDispon > 0
-                            ? 'bg-orange-50 border-orange-100'
-                            : 'bg-slate-50 border-slate-100 opacity-60'
+                        ? 'bg-orange-50 border-orange-100'
+                        : 'bg-slate-50 border-slate-100 opacity-60'
                         }`}>
                         <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
@@ -667,8 +668,14 @@ export default function Cotizador() {
                                             <span className="uppercase text-[10px]">TOTAL</span>
                                             <span className="text-blue-900 text-xl">${totalFinal.toLocaleString()} <span className="text-xs font-normal text-slate-400">{cot.moneda}</span></span>
                                         </div>
-                                        <div className="flex justify-between text-emerald-500 font-bold">
-                                            <span>+ Ganarás</span><span>{puntosAGanar} pts Rewards</span>
+                                        <div className="bg-emerald-50 rounded-xl p-2.5 border border-emerald-100">
+                                            <div className="flex justify-between text-emerald-700 font-black text-xs">
+                                                <span>+ Rewards ({(PORCENTAJE_ACUMULACION * 100)}% de la venta)</span>
+                                                <span>+{puntosAGanar} pts</span>
+                                            </div>
+                                            <p className="text-[9px] text-emerald-500 mt-0.5">
+                                                ${valorPuntosGanados.toFixed(2)} MXN en valor · 10 pts = $1 MXN
+                                            </p>
                                         </div>
                                     </div>
 

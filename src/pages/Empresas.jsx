@@ -241,11 +241,15 @@ export default function Empresas() {
                                     </div>
                                     <div>
                                         <label className="text-xs font-bold text-slate-500 uppercase">Telefono</label>
-                                        <input className="w-full border-b-2 border-gray-200 p-2 outline-none text-blue-600" type="number" value={formData.correoB2B} onChange={e => setFormData({ ...formData, telefono: e.target.value })} />
+                                        <input className="w-full border-b-2 border-gray-200 p-2 outline-none text-blue-600" type="tel" value={formData.telefono} onChange={e => setFormData({ ...formData, telefono: e.target.value })} />
                                     </div>
                                     <div>
                                         <label className="text-xs font-bold text-slate-500 uppercase">Sitio Web</label>
-                                        <input className="w-full border-b-2 border-gray-200 p-2 outline-none text-blue-600" type="text" value={formData.correoB2B} onChange={e => setFormData({ ...formData, sitioWeb: e.target.value })} />
+                                        <input className="w-full border-b-2 border-gray-200 p-2 outline-none text-blue-600" type="text" value={formData.sitioWeb} onChange={e => setFormData({ ...formData, sitioWeb: e.target.value })} />
+                                    </div>
+                                    <div className="md:col-span-3">
+                                        <label className="text-xs font-bold text-slate-500 uppercase">Observaciones</label>
+                                        <textarea className="w-full border-b-2 border-gray-200 p-2 outline-none resize-none" rows="2" value={formData.notas} onChange={e => setFormData({ ...formData, notas: e.target.value })}></textarea>
                                     </div>
                                 </div>
                             </section>
