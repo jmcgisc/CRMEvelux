@@ -20,35 +20,47 @@ export default function Dashboard() {
 
     useEffect(() => {
         // Escuchar Reservas para Ventas
-        const unsubRes = onSnapshot(collection(db, "reservas"), (snap) => {
-            const data = snap.docs.map(d => d.data());
-            const total = data.reduce((acc, r) => acc + Number(r.montoTotal || 0), 0);
-            setStats(prev => ({ ...prev, ventasMes: total, reservasActivas: snap.size }));
-        });
+        const unsubRes = onSnapshot(
+            collection(db, "reservas"),
+            (snap) => {
+                const data = snap.docs.map(d => d.data());
+                const total = data.reduce((acc, r) => acc + Number(r.montoTotal || 0), 0);
+                setStats(prev => ({ ...prev, ventasMes: total, reservasActivas: snap.size }));
+            },
+            (error) => console.warn("Dashboard: Permiso denegado al leer 'reservas'")
+        );
 
         // Escuchar Empleados para Metas
-        const unsubEmp = onSnapshot(collection(db, "empleados"), (snap) => {
-            const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            const metaGral = data.reduce((acc, e) => acc + Number(e.meta || 0), 0);
-            setEmpleados(data);
-            setStats(prev => ({ ...prev, metaTotal: metaGral, prospectosNuevos: snap.size }));
-        });
+        const unsubEmp = onSnapshot(
+            collection(db, "empleados"),
+            (snap) => {
+                const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                const metaGral = data.reduce((acc, e) => acc + Number(e.meta || 0), 0);
+                setEmpleados(data);
+                setStats(prev => ({ ...prev, metaTotal: metaGral, prospectosNuevos: snap.size }));
+            },
+            (error) => console.warn("Dashboard: Permiso denegado al leer 'empleados'")
+        );
 
         // Escuchar Caja Chica para gráfica de gastos
-        const unsubCaja = onSnapshot(collection(db, 'caja_chica'), snap =>
-            setMovimientosCaja(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+        const unsubCaja = onSnapshot(
+            collection(db, 'caja_chica'),
+            snap => setMovimientosCaja(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+            (error) => console.warn("Dashboard: Permiso denegado al leer 'caja_chica'")
         );
 
         // Pagos de Clientes (mes actual)
         const unsubPagos = onSnapshot(
             query(collection(db, 'pagos_clientes'), orderBy('fecha', 'desc')),
-            snap => setPagosClientes(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+            snap => setPagosClientes(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+            (error) => console.warn("Dashboard: Permiso denegado al leer 'pagos_clientes'")
         );
 
         // Logs / Bitácora
         const unsubLogs = onSnapshot(
             query(collection(db, 'logs'), orderBy('fecha', 'desc')),
-            snap => setLogsRecientes(snap.docs.slice(0, 12).map(d => ({ id: d.id, ...d.data() })))
+            snap => setLogsRecientes(snap.docs.slice(0, 12).map(d => ({ id: d.id, ...d.data() }))),
+            (error) => console.warn("Dashboard: Permiso denegado al leer 'logs'")
         );
 
         return () => { unsubRes(); unsubEmp(); unsubCaja(); unsubPagos(); unsubLogs(); };

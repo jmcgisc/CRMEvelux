@@ -63,12 +63,18 @@ function AppContent() {
             <ShieldX className="text-red-400" size={36} />
           </div>
           <h2 className="text-2xl font-black text-white mb-2 tracking-tight">Acceso Denegado</h2>
-          <p className="text-slate-400 text-sm mb-2">
-            El correo <span className="text-red-400 font-bold">{accesoDenegado.correo}</span> no está
-            registrado como usuario del CRM.
-          </p>
-          <p className="text-slate-500 text-xs mb-8">
-            Contacta al administrador del sistema para solicitar acceso.
+          {accesoDenegado.motivo ? (
+            <p className="text-slate-300 text-sm mb-2 px-4 shadow-sm border border-red-500/10 bg-red-950 p-2 rounded">
+              <span className="font-bold text-red-300">Firebase:</span> {accesoDenegado.motivo}
+            </p>
+          ) : (
+            <p className="text-slate-400 text-sm mb-2">
+              El correo <span className="text-red-400 font-bold">{accesoDenegado.correo}</span> no está
+              registrado como usuario del CRM.
+            </p>
+          )}
+          <p className="text-slate-500 text-xs mb-8 mt-4">
+            Contacta al administrador del sistema para solicitar acceso o revisar las reglas de la base de datos.
           </p>
           <button
             onClick={limpiarError}
